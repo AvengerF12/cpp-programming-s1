@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #define MAX_SIZE 10
 
 using namespace std;
@@ -42,6 +43,8 @@ int main()
 	}
 
 	cout << endl;
+
+	system("pause"); // Wait for user input before closing
 	
 	return 0;
 

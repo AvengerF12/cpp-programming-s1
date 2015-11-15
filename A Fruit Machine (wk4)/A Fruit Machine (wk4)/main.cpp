@@ -267,5 +267,7 @@ int main()
 	Set_Color(15, 0); // Set required colour palette
 	cout << result;
 
+	system("pause"); // Wait until user input before closing
+
 	return 0;
 } // end main
