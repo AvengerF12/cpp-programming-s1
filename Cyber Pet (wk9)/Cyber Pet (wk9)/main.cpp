@@ -5,145 +5,267 @@
 
 using namespace std;
 
+// Defines
+#define MAX_X        80  // maximum x position for player
+#define SCROLL_POS   25  // the point that scrolling occurs
+
+// Global variables
+CONSOLE_SCREEN_BUFFER_INFO con_info;   // holds screen info
+HANDLE hconsole;         // handle to console
+
 int game_running = 1;
 string name = "";
+float timer = 0;
+bool sleeping = false;
 
-// Enum of the states and correlated arrays 
+// Enum of the states and correlated arrays
 enum hungerStates {Dead, Starving, RatherHungry, SlightlyPeckish, WellFed};
 string hungerNames[] = {"Dead", "Starving", "Rather Hungry", "Slightly Peckish", "Well-fed"};
 
 enum sleepStates {Collapsed, FallingAsleep, Tired, Awake, WideAwake};
 string sleepNames[] = {"Collapsed", "Falling asleep", "Tired", "Awake", "Wide awake"};
 
+enum happyStates { Depressed, Malinconic, NotAmused, Happy, ExtremelyHappy };
+string happyNames[] = { "Depressed", "Malinconic", "Not amused", "Happy", "ExtremelyHappy" };
+
 // Current states
 hungerStates food = RatherHungry;
-sleepStates sleep = Tired;
+sleepStates sleepiness = Tired;
+happyStates happiness = NotAmused;
 
-void displayStates() 
+void Init_Graphics()
 {
-	cout << name << "'s food state is now: " << hungerNames[food] << endl;
-	cout << name << "'s sleep state is now: " << sleepNames[sleep] << endl;
-	cout << endl;
+	// this function initializes the console graphics engine
+
+	COORD console_size = { 80, 25 }; // size of console
+
+	// open i/o channel to console screen
+	hconsole = CreateFile(TEXT("CONOUT$"), GENERIC_WRITE | GENERIC_READ,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		0L, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0L);
+
+	// make sure we are in 80x25
+	SetConsoleScreenBufferSize(hconsole, console_size);
+
+	// get details for console screen                       
+	GetConsoleScreenBufferInfo(hconsole, &con_info);
+
+} // end Init_Graphics
+
+void Draw_String(int x, int y, string string)
+{
+	// this function draws a string at the given x,y
+
+	COORD cursor_pos; // used to pass coords
+
+	// set printing position
+	cursor_pos.X = x;
+	cursor_pos.Y = y;
+	SetConsoleCursorPosition(hconsole, cursor_pos);
+
+	// print the string
+	cout << string;
+
+} // end Draw_String
+
+void Clear_Screen()
+{
+	// this function clears the screen
+
+	// clear the screen
+	for (int index = 0; index <= 25; index++)
+		Draw_String(0, SCROLL_POS, "\n");
+
+} // end Clear_Screen
+
+void updateUI()
+{
+	Clear_Screen();
+	Draw_String(0, 0, "(Press 'F' to feed " + name + ", 'S' to put " + name + " to sleep, 'P' to play with " + name + " or 'Q' to quit the game)\n\n");
+	Draw_String(0, 3, "Timer :" + to_string(timer) + "\n");
 }
 
-void feedPet()
+void displayStates() // Display the current states of the pet
 {
-	switch (food) {
+	cout << name << "'s food state is now: " << hungerNames[food] << endl;
+	cout << name << "'s sleep state is now: " << sleepNames[sleepiness] << endl;
+	cout << name << "'s happiness state is now: " << happyNames[happiness] << endl;
+	cout << endl;
+} 
+
+void increasePetFood() // Increase the pet's level of food
+{
+	switch (food) { // Check the state in which the pet hunger is currently in and increase it
 		case WellFed:
-			cout << "I've been fed enough already... Do I look fat?" << endl;
 			break;
 		case SlightlyPeckish:
-			cout << "Finally, I was just waiting for the dessert to arrive." << endl;
 			food = WellFed;
 			break;
 		case RatherHungry:
-			cout << "Feed me more or else!" << endl;
 			food = SlightlyPeckish;
 			break;
 		case Starving:
-			cout << "Thanks God tou came to your senses!" << endl;
 			food = RatherHungry;
 			break;
 	}
 
+	displayStates();
+
 	cout << endl;
 
-	displayStates();
 }
 
-void foodStarvePet()
+void decreasePetFood() // Decrease the current food level/state
 {
 	switch (food) {
 	case WellFed:
-		cout << "Oh... I'm not starving but I could eat something..." << endl;
 		food = SlightlyPeckish;
 		break;
 	case SlightlyPeckish:
-		cout << "Are you still there? My plate will not fill itself." << endl;
 		food = RatherHungry;
 		break;
 	case RatherHungry:
-		cout << "I'm serious, if you don't feed me now I'm going to die on you!" << endl;
 		food = Starving;
 		break;
 	case Starving:
 		food = Dead;
-		cout << "R.I.P. " << name << endl;
 		game_running = 0;
 		break;
 	}
 
 	cout << endl;
 
-	displayStates();
 }
 
-void napPet()
+void increasePetSleep() // Increase the pet's sleep state
 {
-	switch (sleep) {
+	switch (sleepiness) { // Check the state in which the pet sleepness is currently in and increase it
 	case WideAwake:
-		cout << "I've slept enough for now." << endl;
-		break; 
+		break;
 	case Awake:
-		cout << "I could use a little nap." << endl;
-		sleep = WideAwake;
+		sleepiness = WideAwake;
 		break;
 	case Tired:
-		cout << "I'm quite tired... See you later." << endl;
-		sleep = Awake;
+		sleepiness = Awake;
 		break;
 	case FallingAsleep:
-		cout << "I won't be able to stay conscious for long..." << endl;
-		sleep = Tired;
+		sleepiness = Tired;
 		break;
 	case Collapsed:
-		cout << "Zzz" << endl;
-		sleep = FallingAsleep;
+		sleepiness = FallingAsleep;
 		break;
 	}
 
 	displayStates();
+
 }
 
-void sleepStarvePet() 
+void decreasePetSleep() // Decrease the current sleep level/state
 {
-	switch (sleep) {
+	switch (sleepiness) {
 	case WideAwake:
-		cout << "I don't feel quite as energetic anymore." << endl;
-		sleep = Awake;
+		sleepiness = Awake;
 		break;
 	case Awake:
-		cout << "Time for a nap, don't you think?" << endl;
-		sleep = Tired;
+		sleepiness = Tired;
 		break;
 	case Tired:
-		cout << "I... need... sleep... now..." << endl;
-		sleep = FallingAsleep;
+		sleepiness = FallingAsleep;
 		break;
 	case FallingAsleep:
-		cout << "Zzz... *Went unconscious*" << endl;
-		sleep = Collapsed;
+		sleepiness = Collapsed;
 		break;
 	case Collapsed:
-		cout << "Zzz... *Still unconscious*" << endl;
+		break;
+	}
+
+}
+
+void increasePetHappiness() // Increase the current happiness level/state
+{
+	switch (sleepiness) {
+	case ExtremelyHappy:
+		break;
+	case Happy:
+		happiness = ExtremelyHappy;
+		break;
+	case NotAmused:
+		happiness = Happy;
+		break;
+	case Malinconic:
+		happiness = NotAmused;
+		break;
+	case Depressed:
+		happiness = Malinconic;
 		break;
 	}
 
 	displayStates();
+
+}
+
+void decreasePetHappiness() // Decrease the current happiness level/state
+{
+	switch (sleepiness) {
+	case ExtremelyHappy:
+		happiness = Happy;
+		break;
+	case Happy:
+		happiness = NotAmused;
+		break;
+	case NotAmused:
+		happiness = Malinconic;
+		break;
+	case Malinconic:
+		happiness = Depressed;
+		break;
+	case Depressed:
+		break;
+	}
+
+}
+
+void balancePetHappiness() // Combine the pet's food and sleep states in order to determine its current level of happiness
+{
+	int expression = (sleepiness + food) / 2 - 1;
+	if (happiness < expression)
+		switch (expression) {
+		case Happy:
+			happiness = NotAmused;
+			break;
+		case NotAmused:
+			happiness = Malinconic;
+			break;
+		case Malinconic:
+			happiness = Depressed;
+			break;
+		case Depressed:
+			break;
+	}
 }
 
 int main()
 {
+	// Local variable initialization
 	float sleepTime = 100;
 	char key = '\0';
-	float timer = 0;
 
+	// set up the console text graphics system
+//	Init_Graphics();
+
+	// Check for a name
 	cout << "Hello, I am your virtual pet... What shall my name be?" << endl;
+	cout << "(Insert multiple characters for the name or a single one to skip name selection)" << endl;
 	cin >> name;
-	cout <<	endl << "well, what are you waiting for? Feed me already!" << endl;
-	cout << "(Press 'F' to feed " << name << ", 'S' to put " << name << " to sleep or 'Q' to quit the game)" << endl << endl;
+	if (name.length() == 1){
+		name = "your pet";
+	}
 
-	displayStates();
+	cout <<	endl << "Well, what are you waiting for? Feed me already!" << endl;
+	cout << "(Press 'F' to feed " << name << ", 'S' to put " << name << " to sleep, 'P' to play with " << name << " or 'Q' to quit the game)" << endl << endl;
+
+	// Clear screen from everything
+//	Clear_Screen();
 
 	// Get player input
 	while (game_running) {
@@ -158,20 +280,29 @@ int main()
 
 			// Is player trying to feed, if so feed
 			if (key == 'F')
-				feedPet();
-
+				increasePetFood();
+			
+			// Is player trying to nap, if so nap
 			if (key == 'S')
-				napPet();
+				increasePetSleep();
 
-		} // end if
+			// Is player trying to play with the pet, if so play with it
+			if (key == 'P')
+				increasePetHappiness();
+		}
 
-		if (timer > 5) {
-			sleepStarvePet();
-			foodStarvePet();
+		// Check if the timer exceeded the intended limit, if so starve the pet and reset the timer
+		if (timer > 5) { 
+			decreasePetSleep();
+			decreasePetFood();
+			decreasePetHappiness();
+			balancePetHappiness();
+			displayStates();
+
 			timer = 0;
 		}
 
-		timer += sleepTime / 1000;
+		timer += sleepTime / 1000; // Increase the timer
 
 		Sleep(sleepTime);
 	}
