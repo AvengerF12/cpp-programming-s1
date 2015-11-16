@@ -13,9 +13,10 @@ using namespace std;
 CONSOLE_SCREEN_BUFFER_INFO con_info;   // holds screen info
 HANDLE hconsole;         // handle to console
 
-int game_running = 1;
-string name = "";
-float timer = 0;
+int game_running = 1; // Determines if the games is still running or not
+string name = ""; // Name of the pet
+float timerFood = 0; // Time to wait before decreasing the food amount
+float timerSleep = 0; // Time to wait before decreasing the sleep amount
 bool sleeping = false;
 
 // Enum of the states and correlated arrays
@@ -26,7 +27,7 @@ enum sleepStates {Collapsed, FallingAsleep, Tired, Awake, WideAwake};
 string sleepNames[] = {"Collapsed", "Falling asleep", "Tired", "Awake", "Wide awake"};
 
 enum happyStates { Depressed, Malinconic, NotAmused, Happy, ExtremelyHappy };
-string happyNames[] = { "Depressed", "Malinconic", "Not amused", "Happy", "ExtremelyHappy" };
+string happyNames[] = { "Depressed", "Malinconic", "Not amused", "Happy", "Extremely happy" };
 
 // Current states
 hungerStates food = RatherHungry;
@@ -78,13 +79,6 @@ void Clear_Screen()
 
 } // end Clear_Screen
 
-void updateUI()
-{
-	Clear_Screen();
-	Draw_String(0, 0, "(Press 'F' to feed " + name + ", 'S' to put " + name + " to sleep, 'P' to play with " + name + " or 'Q' to quit the game)\n\n");
-	Draw_String(0, 3, "Timer :" + to_string(timer) + "\n");
-}
-
 void displayStates() // Display the current states of the pet
 {
 	cout << name << "'s food state is now: " << hungerNames[food] << endl;
@@ -92,6 +86,14 @@ void displayStates() // Display the current states of the pet
 	cout << name << "'s happiness state is now: " << happyNames[happiness] << endl;
 	cout << endl;
 } 
+
+void updateUI()
+{
+	Clear_Screen();
+	Draw_String(0, 0, "(Press 'F' to feed " + name + ", 'S' to put " + name + " to sleep, 'P' to play with " + name + " or 'Q' to quit the game)\n\n");
+	Draw_String(0, 3, "");
+	displayStates();
+}
 
 void increasePetFood() // Increase the pet's level of food
 {
@@ -183,7 +185,7 @@ void decreasePetSleep() // Decrease the current sleep level/state
 
 void increasePetHappiness() // Increase the current happiness level/state
 {
-	switch (sleepiness) {
+	switch (happiness) {
 	case ExtremelyHappy:
 		break;
 	case Happy:
@@ -228,7 +230,7 @@ void decreasePetHappiness() // Decrease the current happiness level/state
 void balancePetHappiness() // Combine the pet's food and sleep states in order to determine its current level of happiness
 {
 	int expression = (sleepiness + food) / 2 - 1;
-	if (happiness < expression)
+	if (happiness < expression) {
 		switch (expression) {
 		case Happy:
 			happiness = NotAmused;
@@ -241,6 +243,7 @@ void balancePetHappiness() // Combine the pet's food and sleep states in order t
 			break;
 		case Depressed:
 			break;
+		}
 	}
 }
 
@@ -292,17 +295,27 @@ int main()
 		}
 
 		// Check if the timer exceeded the intended limit, if so starve the pet and reset the timer
-		if (timer > 5) { 
-			decreasePetSleep();
+		if (timerFood > 10) { 
 			decreasePetFood();
 			decreasePetHappiness();
 			balancePetHappiness();
 			displayStates();
 
-			timer = 0;
+			timerFood = 0;
 		}
 
-		timer += sleepTime / 1000; // Increase the timer
+		// Check if the timer exceeded the intended limit, if so starve the pet and reset the timer
+		if (timerSleep > 15) {
+			decreasePetSleep();
+			decreasePetHappiness();
+			balancePetHappiness();
+			displayStates();
+
+			timerSleep = 0;
+		}
+
+		timerFood += sleepTime / 1000; // Increases the timer after which the pet will lose some 'food'
+		timerSleep += sleepTime / 1000; // Increases the timer after which the pet will lose some 'sleep'
 
 		Sleep(sleepTime);
 	}
