@@ -15,6 +15,7 @@ void Init_Graphics();
 void Draw_String(int, int, string);
 void Clear_Screen();
 void updateUI();
+void addPetCommunication();
 
 // Global variables
 CONSOLE_SCREEN_BUFFER_INFO con_info;   // holds screen info
@@ -36,6 +37,7 @@ string sleepinessStrings[] = {"Collapsed", "Falling asleep", "Tired", "Awake", "
 enum happyStates { Depressed, Malinconic, NotAmused, Happy, ExtremelyHappy };
 string happinessStrings[] = { "Depressed", "Malinconic", "Not amused", "Happy", "Extremely happy" };
 
+// Array of strings that contains the messages from the pet to the player
 string petCommunications[COMM_SIZE];
 
 // Current states
@@ -91,6 +93,7 @@ void Clear_Screen()
 
 void updateUI()
 {
+	// This didn't get out of end... no, not at all...
 	// Additional spaces needed because of the overprinting of words and numbers... hackish...
 
 	// Keep instructions on screen all the time
