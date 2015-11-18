@@ -333,6 +333,12 @@ int main()
 	cout << "(Insert your pet's name or leave blank for the default option)" << endl;
 	getline(cin,name);
 
+	// Don't allow names longer than 8 characters... they break the interface
+	while (name.length() > 8) {
+		cout << "The name that you chose is too long, please choose a shorter one. (Max 8 char)" << endl;
+		getline(cin, name);
+	}
+
 	if (name == "") {
 		name = "your pet";
 	}
