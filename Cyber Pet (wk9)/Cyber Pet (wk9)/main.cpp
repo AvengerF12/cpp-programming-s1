@@ -29,11 +29,11 @@ bool sleeping = false; // Determines if the pet is asleep or not
 float awakeInTimer = 7; // Determines how much the pet will sleep
 
 // Enum of the states and correlated arrays containing the string version of the states
-enum hungerStates {Dead, Starving, RatherHungry, SlightlyPeckish, WellFed};
-string hungerStrings[] = {"Dead", "Starving", "Rather Hungry", "Slightly Peckish", "Well-fed"};
+enum hungerStates { Dead, Starving, RatherHungry, SlightlyPeckish, WellFed };
+string hungerStrings[] = { "Dead", "Starving", "Rather Hungry", "Slightly Peckish", "Well-fed" };
 
-enum sleepStates {Collapsed, FallingAsleep, Tired, Awake, WideAwake};
-string sleepinessStrings[] = {"Collapsed", "Falling asleep", "Tired", "Awake", "Wide awake"};
+enum sleepStates { Collapsed, FallingAsleep, Tired, Awake, WideAwake };
+string sleepinessStrings[] = { "Collapsed", "Falling asleep", "Tired", "Awake", "Wide awake" };
 
 enum happyStates { Depressed, Malinconic, NotAmused, Happy, ExtremelyHappy };
 string happinessStrings[] = { "Depressed", "Malinconic", "Not amused", "Happy", "Extremely happy" };
@@ -128,7 +128,7 @@ void updateUI()
 	string sleepingValue;
 
 	// Spaces needed to avoid overprinting issues
-	if (sleeping == true){
+	if (sleeping == true) {
 		sleepingValue = "Asleep  ";
 	}
 	else {
@@ -147,8 +147,8 @@ void addPetCommunication(string message)
 	// Adds a message to an array and organize the output as a scrollable list of strings
 	// Move down each string by one position every time a new one is added
 	for (int i = COMM_SIZE - 1; i > 0; i--) {
-		
-		petCommunications[i] = petCommunications[i-1];
+
+		petCommunications[i] = petCommunications[i - 1];
 	}
 
 	petCommunications[0] = message + "               ";
@@ -170,6 +170,9 @@ void increasePetFood() // Increase the pet's level of food
 	case Starving:
 		food = RatherHungry;
 		break;
+	case Dead:
+		// You cannot eat when you are dead... silly...
+		break;
 	}
 
 }
@@ -183,13 +186,16 @@ void decreasePetFood() // Decrease the current food level/state
 	case SlightlyPeckish:
 		food = RatherHungry;
 		break;
-	case RatherHungry: 
+	case RatherHungry:
 		addPetCommunication("If you don't feed I am going to die... Please...");
 		food = Starving;
 		break;
 	case Starving:
 		food = Dead;
 		game_running = 0;
+		break;
+	case Dead:
+		// Dead... yep... no need for this case
 		break;
 	}
 
@@ -235,6 +241,7 @@ void decreasePetSleep() // Decrease the current sleep level/state
 		sleeping = true;
 		break;
 	case Collapsed:
+		// Ugly way to handle one of the few exceptions... after collapsing the pet must go back up to FallingAsleep
 		sleepiness = FallingAsleep;
 		break;
 
@@ -261,7 +268,7 @@ void increasePetHappiness() // Increase the current happiness level/state
 		happiness = Malinconic;
 		break;
 	}
-	
+
 }
 
 void decreasePetHappiness() // Decrease the current happiness level/state
@@ -290,7 +297,7 @@ void balancePetHappiness() // Combine the pet's food and sleep states in order t
 {
 	// The result of the expression is a reasonable value that represents the relationship between food and sleep
 	// To be fully happy the player has to play with the pet
-	int expression = (sleepiness + food) / 2 - 1; 
+	int expression = (sleepiness + food) / 2 - 1;
 
 	// Assign the value of the expression to the happiness variable
 	switch (expression) {
@@ -326,12 +333,12 @@ int main()
 	cout << "(Insert multiple characters for the name or a single one to skip name selection)" << endl;
 	cin >> name;
 
-	if (name.length() == 1){
+	if (name.length() == 1) {
 		name = "your pet";
 	}
 
 	// Print the different actions that the player can trigger
-	cout <<	endl << "Well, what are you waiting for? Feed me already!" << endl;
+	cout << endl << "Well, what are you waiting for? Feed me already!" << endl;
 	cout << "(Press 'F' to feed " << name << ", 'S' to put " << name << " to sleep, 'P' to play with " << name << " or 'Q' to quit the game)" << endl << endl;
 
 	// Clear screen from everything
@@ -351,7 +358,8 @@ int main()
 			// Is player trying to feed, if so feed and reset food timer
 			if (key == 'F') {
 
-				if (sleeping == true) { // You can't feed the pet while it's sleeping
+				if (sleeping == true) { 
+					// You can't feed the pet while it's sleeping
 					addPetCommunication("Are you serious? I'm sleeping and you're trying to feed me!");
 				}
 				else {
@@ -366,6 +374,7 @@ int main()
 				if (sleeping == true) {
 					addPetCommunication("I'm already sleeping, duh.");
 				}
+				// Avoid being able to reset sleep timer when WideAwake
 				else if (sleepiness != WideAwake) {
 					sleepDecreaseTimer = 15;
 					sleeping = true;
@@ -399,12 +408,14 @@ int main()
 		To compensate for the loss the subtracted value is doubled.*/
 
 		if (sleeping == true) {
+			// If the timer after which the pet wakes up is over the pet's sleep state increases and the 
 			if (awakeInTimer <= 0) {
 				increasePetSleep();
 				sleeping = false;
 
 				awakeInTimer = 7;
 			}
+			// While the pet is sleeping the timer continues to tick until it reaches 0
 			else {
 				awakeInTimer -= pauseTime / 1000 * 2;
 			}
@@ -424,7 +435,7 @@ int main()
 			}
 		}
 
-		
+
 		// Sleeping should not affect the hunger timer because it increases the difficulty and it makes sense
 		hungerDecreaseTimer -= pauseTime / 1000 * 2; // Decreases the timer after which the pet will lose some 'food'
 
@@ -433,6 +444,7 @@ int main()
 
 	Clear_Screen();
 
+	// End game message
 	Draw_String(35, 10, "Game Over");
 	Draw_String(34, 12, name + " died.");
 	Draw_String(0, 0, ""); // Reset output position
@@ -449,7 +461,7 @@ int main()
 2) Start loop
 	2.1) Check input keyboard
 
-		2.1.1) If the key pressed is F, feed the pet 
+		2.1.1) If the key pressed is F, feed the pet
 			Check if the pet is sleeping
 				If it is then:
 					Leave the food state as it is
@@ -461,7 +473,7 @@ int main()
 
 		2.1.2) If the key pressed is S, put the pet to sleep
 			Check if the pet's sleepiness state is at maximum
-				If it's not: 
+				If it's not:
 					Increment the sleepiness state
 					Display the pet's values
 				If it is:
