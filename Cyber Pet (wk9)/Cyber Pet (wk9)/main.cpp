@@ -330,10 +330,10 @@ int main()
 
 	// Check for a name, if no name is assigned just reference the pet as "your pet"
 	cout << "Hello, I am your virtual pet... What shall my name be?" << endl;
-	cout << "(Insert multiple characters for the name or a single one to skip name selection)" << endl;
-	cin >> name;
+	cout << "(Insert your pet's name or leave blank for the default option)" << endl;
+	getline(cin,name);
 
-	if (name.length() == 1) {
+	if (name == "") {
 		name = "your pet";
 	}
 
