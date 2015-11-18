@@ -23,11 +23,12 @@ HANDLE hconsole;         // handle to console
 
 int game_running = 1; // Determines if the games is still running or not
 string name = ""; // Name of the pet
-float timerFood = 10; // Time to wait before decreasing the food amount
-float timerSleep = 15; // Time to wait before decreasing the sleep amount
-bool sleeping = false;
+float hungerDecreaseTimer = 10; // Time to wait before decreasing the food counter 
+float sleepDecreaseTimer = 15; // Time to wait before decreasing the sleep counter
+bool sleeping = false; // Determines if the pet is asleep or not
+float awakeInTimer = 7; // Determines how much the pet will sleep
 
-// Enum of the states and correlated arrays
+// Enum of the states and correlated arrays containing the string version of the states
 enum hungerStates {Dead, Starving, RatherHungry, SlightlyPeckish, WellFed};
 string hungerStrings[] = {"Dead", "Starving", "Rather Hungry", "Slightly Peckish", "Well-fed"};
 
@@ -95,6 +96,7 @@ void updateUI()
 {
 	// This didn't get out of end... no, not at all...
 	// Additional spaces needed because of the overprinting of words and numbers... hackish...
+	// Also needed to avoid the mess that Clear_Screen makes of the UI
 
 	// Keep instructions on screen all the time
 	Draw_String(0, 0, "(Press 'F' to feed " + name + ", 'S' to put " + name + " to sleep, 'P' to play with " + name + " or 'Q' to quit the game)\n\n");
@@ -118,27 +120,31 @@ void updateUI()
 	}
 
 	// Update the pet's stats, using the correspondant strings from the arrays, on the bottom-left of the screen
-	Draw_String(0, 19, name + "'s hunger: " + hungerStrings[food] + "            ");
-	Draw_String(0, 21, name + "'s sleepiness: " + sleepinessStrings[sleepiness] + "            ");
-	Draw_String(0, 23, name + "'s happiness: " + happinessStrings[happiness] + "              ");
+	Draw_String(0, 19, name + "'s food level: " + hungerStrings[food] + "            ");
+	Draw_String(0, 21, name + "'s sleep level: " + sleepinessStrings[sleepiness] + "         ");
+	Draw_String(0, 23, name + "'s happy level: " + happinessStrings[happiness] + "           ");
 
+	// Display if the pet is actually sleeping or not
 	string sleepingValue;
 
-	if (sleeping){
-		sleepingValue = "True";
+	// Spaces needed to avoid overprinting issues
+	if (sleeping == true){
+		sleepingValue = "Asleep  ";
 	}
 	else {
-		sleepingValue = "False";
+		sleepingValue = "Wakeful  ";
 	}
-	Draw_String(40, 21, "Sleeping: " + sleepingValue);
+	Draw_String(40, 21, "State: " + sleepingValue);
 
 	// Update the timers on the bottom-right corner of the screen (with integers to avoid wasting space)
-	Draw_String(64, 21, "Food timer: " + to_string(int(timerFood)) + " ");
-	Draw_String(64, 23, "Sleep timer: " + to_string(int(timerSleep)) + " ");
+	Draw_String(60, 19, "Awake in: " + to_string(int(awakeInTimer)) + " ");
+	Draw_String(60, 21, "-Food in: " + to_string(int(hungerDecreaseTimer)) + " ");
+	Draw_String(60, 23, "-Sleep in: " + to_string(int(sleepDecreaseTimer)) + " ");
 }
 
 void addPetCommunication(string message)
 {
+	// Adds a message to an array and organize the output as a scrollable list of strings
 	// Move down each string by one position every time a new one is added
 	for (int i = COMM_SIZE - 1; i > 0; i--) {
 		
@@ -151,24 +157,19 @@ void addPetCommunication(string message)
 // Game related functions
 void increasePetFood() // Increase the pet's level of food
 {
-	if (sleeping == true) { // You can't feed the pet while it's sleeping
-		addPetCommunication("Are you serious? I'm alredy sleeping and now you're trying to feed me! I can't multitask like that! Do i look like a computer program to you?!");
-	}
-	else {
-		switch (food) { // Check the state in which the pet hunger is currently in and increase it
-		case WellFed:
-			addPetCommunication("You've fed me enough... Do I look fat?");
-			break;
-		case SlightlyPeckish:
-			food = WellFed;
-			break;
-		case RatherHungry:
-			food = SlightlyPeckish;
-			break;
-		case Starving:
-			food = RatherHungry;
-			break;
-		}
+	switch (food) { // Check the state in which the pet hunger is currently in and increase it
+	case WellFed:
+		addPetCommunication("You've fed me enough... Do I look fat?");
+		break;
+	case SlightlyPeckish:
+		food = WellFed;
+		break;
+	case RatherHungry:
+		food = SlightlyPeckish;
+		break;
+	case Starving:
+		food = RatherHungry;
+		break;
 	}
 
 }
@@ -182,7 +183,8 @@ void decreasePetFood() // Decrease the current food level/state
 	case SlightlyPeckish:
 		food = RatherHungry;
 		break;
-	case RatherHungry:
+	case RatherHungry: 
+		addPetCommunication("If you don't feed I am going to die... Please...");
 		food = Starving;
 		break;
 	case Starving:
@@ -193,7 +195,7 @@ void decreasePetFood() // Decrease the current food level/state
 
 }
 
-void increasePetSleep() // Increase the pet's sleep state
+void increasePetSleep() // Increase the current sleep level/state
 {
 	switch (sleepiness) { // Check the state in which the pet sleepness is currently in and increase it
 	case WideAwake:
@@ -229,36 +231,35 @@ void decreasePetSleep() // Decrease the current sleep level/state
 		break;
 	case FallingAsleep:
 		sleepiness = Collapsed;
+		addPetCommunication("*Collapsed* 'Your pet has fallen asleep.'");
+		sleeping = true;
 		break;
 	case Collapsed:
+		sleepiness = FallingAsleep;
 		break;
+
 	}
 
 }
 
 void increasePetHappiness() // Increase the current happiness level/state
 {
-	if (sleeping == true) { // You can't play while the pet is sleeping
-		cout << "Can't you see that i am sleeping? We will play later... I mean Zzz" << endl;
-	}
-	else {
-		switch (happiness) {
-		case ExtremelyHappy:
-			addPetCommunication("I'm already plenty happy, no need to waste energies");
-			break;
-		case Happy:
-			happiness = ExtremelyHappy;
-			break;
-		case NotAmused:
-			happiness = Happy;
-			break;
-		case Malinconic:
-			happiness = NotAmused;
-			break;
-		case Depressed:
-			happiness = Malinconic;
-			break;
-		}
+	switch (happiness) {
+	case ExtremelyHappy:
+		addPetCommunication("I'm already plenty happy, no need to waste energies");
+		break;
+	case Happy:
+		happiness = ExtremelyHappy;
+		break;
+	case NotAmused:
+		happiness = Happy;
+		break;
+	case Malinconic:
+		happiness = NotAmused;
+		break;
+	case Depressed:
+		happiness = Malinconic;
+		break;
 	}
 	
 }
@@ -276,6 +277,7 @@ void decreasePetHappiness() // Decrease the current happiness level/state
 		happiness = Malinconic;
 		break;
 	case Malinconic:
+		addPetCommunication("Why should I even bother to play? Life is meaningless either way...");
 		happiness = Depressed;
 		break;
 	case Depressed:
@@ -287,19 +289,25 @@ void decreasePetHappiness() // Decrease the current happiness level/state
 void balancePetHappiness() // Combine the pet's food and sleep states in order to determine its current level of happiness
 {
 	// The result of the expression is a reasonable value that represents the relationship between food and sleep
+	// To be fully happy the player has to play with the pet
 	int expression = (sleepiness + food) / 2 - 1; 
 
+	// Assign the value of the expression to the happiness variable
 	switch (expression) {
+	case ExtremelyHappy:
+		happiness = ExtremelyHappy;
+		break;
 	case Happy:
-		happiness = NotAmused;
+		happiness = Happy;
 		break;
 	case NotAmused:
-		happiness = Malinconic;
+		happiness = NotAmused;
 		break;
 	case Malinconic:
-		happiness = Depressed;
+		happiness = Malinconic;
 		break;
 	case Depressed:
+		happiness = Depressed;
 		break;
 	}
 }
@@ -340,49 +348,93 @@ int main()
 			if (key == 'Q' || key == 27)
 				game_running = 0;
 
-			// Is player trying to feed, if so feed
-			if (key == 'F')
-				increasePetFood();
-			
-			// Is player trying to nap, if so nap
-			if (key == 'S')
-				increasePetSleep();
+			// Is player trying to feed, if so feed and reset food timer
+			if (key == 'F') {
+
+				if (sleeping == true) { // You can't feed the pet while it's sleeping
+					addPetCommunication("Are you serious? I'm sleeping and you're trying to feed me!");
+				}
+				else {
+					increasePetFood();
+					hungerDecreaseTimer = 10;
+				}
+
+			}
+
+			// Is player trying to nap, if so nap and reset sleep timer
+			if (key == 'S') {
+				if (sleeping == true) {
+					addPetCommunication("I'm already sleeping, duh.");
+				}
+				else if (sleepiness != WideAwake) {
+					sleepDecreaseTimer = 15;
+					sleeping = true;
+				}
+
+			}
 
 			// Is player trying to play with the pet, if so play with it
-			if (key == 'P')
-				increasePetHappiness();
+			if (key == 'P') {
+				if (sleeping == true) {
+					addPetCommunication("I cannot play right now... I'm sleeping, duh.");
+				}
+				else {
+					increasePetHappiness();
+				}
+			}
 		}
 
 		// After a certain amount of time the pet gets more hungry
-		if (timerFood <= 0) { 
+		if (hungerDecreaseTimer <= 0) {
 			decreasePetFood();
 			balancePetHappiness();
 
-			timerFood = 10;
-		}
-
-		// After a certain amount of time the pet gets more sleepy
-		if (timerSleep <= 0) {
-			decreasePetSleep();
-			balancePetHappiness();
-
-			timerSleep = 15;
+			hungerDecreaseTimer = 10;
 		}
 
 		updateUI();
 
 		/*The timers are not perfect since they are also affected by the Sleep() function.
-		The timer loses 1 second for each one that it counts.
-		To compensate for the time that Sleep() makes the timer lose the subtracted value is doubled.*/
-		timerFood -= pauseTime / 1000 * 2; // Decreases the timer after which the pet will lose some 'food'
-		timerSleep -= pauseTime / 1000 * 2; // Decreases the timer after which the pet will lose some 'sleep'
+		They lose 1 second for each counted one.
+		To compensate for the loss the subtracted value is doubled.*/
 
-		Sleep(pauseTime); // The process is paused for 'sleepTime' milliseconds
+		if (sleeping == true) {
+			if (awakeInTimer <= 0) {
+				increasePetSleep();
+				sleeping = false;
+
+				awakeInTimer = 7;
+			}
+			else {
+				awakeInTimer -= pauseTime / 1000 * 2;
+			}
+		}
+
+		if (sleeping == false) {
+			// After a certain amount of time the pet gets more sleepy
+			if (sleepDecreaseTimer <= 0) {
+				decreasePetSleep();
+				balancePetHappiness();
+
+				sleepDecreaseTimer = 15;
+			}
+			else {
+				// While sleeping the sleep level should not decrease
+				sleepDecreaseTimer -= pauseTime / 1000 * 2; // Decreases the timer after which the pet will lose some 'sleep'
+			}
+		}
+
+		
+		// Sleeping should not affect the hunger timer because it increases the difficulty and it makes sense
+		hungerDecreaseTimer -= pauseTime / 1000 * 2; // Decreases the timer after which the pet will lose some 'food'
+
+		Sleep(pauseTime); // The process is paused for 'sleepTime' milliseconds, needed to synchronize frames
 	}
 
 	Clear_Screen();
 
 	Draw_String(35, 10, "Game Over");
+	Draw_String(34, 12, name + " died.");
 	Draw_String(0, 0, ""); // Reset output position
 
 	system("pause"); // Wait until user input before closing
@@ -438,4 +490,4 @@ int main()
 3) Repeat the loop until Q is pressed
 */
 
-// TODO: - Add sleeping check to food function
+// TODO: - Update pseudocode;
