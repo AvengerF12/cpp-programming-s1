@@ -25,7 +25,7 @@ int game_running = 1; // Determines if the games is still running or not
 string name = ""; // Name of the pet
 float hungerDecreaseTimer = 10; // Time to wait before decreasing the food counter 
 float sleepDecreaseTimer = 15; // Time to wait before decreasing the sleep counter
-bool sleeping = false; // Determines if the pet is asleep or not
+bool isSleeping = false; // Determines if the pet is asleep or not
 float awakeInTimer = 7; // Determines how much the pet will sleep
 
 // Enum of the states and correlated arrays containing the string version of the states
@@ -128,7 +128,7 @@ void updateUI()
 	string sleepingValue;
 
 	// Spaces needed to avoid overprinting issues
-	if (sleeping == true) {
+	if (isSleeping == true) {
 		sleepingValue = "Asleep  ";
 	}
 	else {
@@ -238,7 +238,7 @@ void decreasePetSleep() // Decrease the current sleep level/state
 	case FallingAsleep:
 		sleepiness = Collapsed;
 		addPetCommunication("*Collapsed* 'Your pet has fallen asleep.'");
-		sleeping = true;
+		isSleeping = true;
 		break;
 	case Collapsed:
 		// Ugly way to handle one of the few exceptions... after collapsing the pet must go back up to FallingAsleep
@@ -364,7 +364,7 @@ int main()
 			// Is player trying to feed, if so feed and reset food timer
 			if (key == 'F') {
 
-				if (sleeping == true) { 
+				if (isSleeping == true) {
 					// You can't feed the pet while it's sleeping
 					addPetCommunication("Are you serious? I'm sleeping and you're trying to feed me!");
 				}
@@ -377,20 +377,20 @@ int main()
 
 			// Is player trying to nap, if so nap and reset sleep timer
 			if (key == 'S') {
-				if (sleeping == true) {
+				if (isSleeping == true) {
 					addPetCommunication("I'm already sleeping, duh.");
 				}
 				// Avoid being able to reset sleep timer when WideAwake
 				else if (sleepiness != WideAwake) {
 					sleepDecreaseTimer = 15;
-					sleeping = true;
+					isSleeping = true;
 				}
 
 			}
 
 			// Is player trying to play with the pet, if so play with it
 			if (key == 'P') {
-				if (sleeping == true) {
+				if (isSleeping == true) {
 					addPetCommunication("I cannot play right now... I'm sleeping, duh.");
 				}
 				else {
@@ -413,11 +413,11 @@ int main()
 		They lose 1 second for each counted one.
 		To compensate for the loss the subtracted value is doubled.*/
 
-		if (sleeping == true) {
+		if (isSleeping == true) {
 			// If the timer after which the pet wakes up is over the pet's sleep state increases and the 
 			if (awakeInTimer <= 0) {
 				increasePetSleep();
-				sleeping = false;
+				isSleeping = false;
 
 				awakeInTimer = 7;
 			}
@@ -427,7 +427,7 @@ int main()
 			}
 		}
 
-		if (sleeping == false) {
+		if (isSleeping == false) {
 			// After a certain amount of time the pet gets more sleepy
 			if (sleepDecreaseTimer <= 0) {
 				decreasePetSleep();
@@ -460,6 +460,9 @@ int main()
 	return 0;
 }
 
+// Limitations: The UI can be destroyed by quickly pressing the sleep and feed button alternatively.
+// The refresh of the UI is not really istantaneous, probably related to the Sleep function
+// The timers are also not really precise, again a limitation of using this approach with Sleep()
 
 /*
 1) Start timer/counter
