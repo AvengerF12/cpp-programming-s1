@@ -202,8 +202,8 @@ int main()
 			game_running = 0;
 		}
 
-		// Check that a second passed and increment numbers
-		if (timer >= 1) { 
+		// Check that a second passed and make the rotor scroll by one position
+		if (timer >= 1) {
 			timer = 0;
 			symbol1++;
 			symbol2++;
@@ -216,8 +216,9 @@ int main()
 			symbol9++;
 		}
 
+		// This block of code makes the rotors loop through the same symbols
 		if (symbol1 > 6) { // Check that number didn't exceed its limit
-			symbol1 = rand()%4 + 3;
+			symbol1 = rand()%4 + 3; // Limit the result to a number from 3 to 6
 		}
 
 		if (symbol2 > 6) { // Check that number didn't exceed its limit
