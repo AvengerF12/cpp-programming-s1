@@ -241,7 +241,7 @@ void decreasePetSleep() // Decrease the current sleep level/state
 		isSleeping = true;
 		break;
 	case Collapsed:
-		// Ugly way to handle one of the few exceptions... after collapsing the pet must go back up to FallingAsleep
+		// Handle one of the few exceptions... after collapsing the pet must go back up to FallingAsleep
 		sleepiness = FallingAsleep;
 		break;
 
@@ -271,28 +271,6 @@ void increasePetHappiness() // Increase the current happiness level/state
 
 }
 
-void decreasePetHappiness() // Decrease the current happiness level/state
-{
-	switch (sleepiness) {
-	case ExtremelyHappy:
-		happiness = Happy;
-		break;
-	case Happy:
-		happiness = NotAmused;
-		break;
-	case NotAmused:
-		happiness = Malinconic;
-		break;
-	case Malinconic:
-		addPetCommunication("Why should I even bother to play? Life is meaningless either way...");
-		happiness = Depressed;
-		break;
-	case Depressed:
-		break;
-	}
-
-}
-
 void balancePetHappiness() // Combine the pet's food and sleep states in order to determine its current level of happiness
 {
 	// The result of the expression is a reasonable value that represents the relationship between food and sleep
@@ -314,6 +292,7 @@ void balancePetHappiness() // Combine the pet's food and sleep states in order t
 		happiness = Malinconic;
 		break;
 	case Depressed:
+		addPetCommunication("Why should I even bother to play? Life is meaningless anyway...");
 		happiness = Depressed;
 		break;
 	}
@@ -347,7 +326,7 @@ int main()
 	cout << endl << "Well, what are you waiting for? Feed me already!" << endl;
 	cout << "(Press 'F' to feed " << name << ", 'S' to put " << name << " to sleep, 'P' to play with " << name << " or 'Q' to quit the game)" << endl << endl;
 
-	// Clear screen from everything
+	// Clear screen from everything unecessary
 	Clear_Screen();
 
 	// Get player input
@@ -370,7 +349,7 @@ int main()
 				}
 				else {
 					increasePetFood();
-					hungerDecreaseTimer = 10;
+					hungerDecreaseTimer = 10; // Reset timer
 				}
 
 			}
@@ -382,7 +361,7 @@ int main()
 				}
 				// Avoid being able to reset sleep timer when WideAwake
 				else if (sleepiness != WideAwake) {
-					sleepDecreaseTimer = 15;
+					sleepDecreaseTimer = 15; // Reset timer
 					isSleeping = true;
 				}
 
@@ -394,10 +373,12 @@ int main()
 					addPetCommunication("I cannot play right now... I'm sleeping, duh.");
 				}
 				else {
+					// A pet can be happy even if starving or tired, happiness goes beyond these needs... in this game
 					increasePetHappiness();
 				}
 			}
 		}
+
 
 		// After a certain amount of time the pet gets more hungry
 		if (hungerDecreaseTimer <= 0) {
@@ -465,7 +446,12 @@ int main()
 // The timers are also not really precise, again a limitation of using this approach with Sleep()
 
 /*
-1) Start timer/counter
+1) Start
+	1.1) Initiliaze counter/timer
+	1.2) Introduce pet and ask for a name
+		If a string is inserted, then use that as the name
+		If the input is blank, than use 'your pet' as the name
+	1.3) Print instructions
 
 2) Start loop
 	2.1) Check input keyboard
@@ -475,40 +461,47 @@ int main()
 				If it is then:
 					Leave the food state as it is
 					Tell the player that the pet can't eat
-				If it's not then proceed
-			Check if the pet is well-fed
-				If it's not then increment the food amount and display the pet's values
-				If it is then just display the values
+
+			Check if the pet's food state is at maximum
+				If it's not:
+					Increment the food amount
+					Reset food timer
 
 		2.1.2) If the key pressed is S, put the pet to sleep
+			Check if the pet is sleeping
+				If it is:
+					Leave the sleepiness state as it is
+					Tell the player that the pet is already sleeping	
+
 			Check if the pet's sleepiness state is at maximum
 				If it's not:
 					Increment the sleepiness state
-					Display the pet's values
-				If it is:
-					Display the pet's values
+					Reset sleep timer
 
 		2.1.3) If the key pressed is P, play with the pet
 			Check if the pet is sleeping
 				If it is:
 					Leave the happiness state as it is
 					Tell the player that the pet can't play
-				If it's not:
-					Proceed
+
 			Check if the pet's happiness is at maximum
 				If it's not:
 					Increment the happiness state
-					Display the pet's values
-				If it is:
-					Display the values
 
 		2.1.4) If the key pressed is Q, quit the program
 
-	2.2) Add the amount of elapsed time to the counter
-	2.3) If the elapsed time is greater than X, go down one state from the current one
-	2.4) Reset the timer
+	2.2) Update the UI content, like timers, scores, stats
 
-3) Repeat the loop until Q is pressed
+	2.3) Add the amount of elapsed time to the timers/counters
+
+	2.4) If the elapsed time is greater than X
+		2.4.1) Go down by one state in food 
+		2.4.2) Go down by one state in sleep, if the pet is awake
+		2.4.3) Recalculate maximum happiness
+		2.4.4) Reset the timer
+
+3) Repeat the loop until Q is pressed or the pet dies
+
+4) Print 'Game Over' message
+
 */
-
-// TODO: - Update pseudocode;
