@@ -205,52 +205,21 @@ int main()
 		// Check that a second passed and make the rotor scroll by one position
 		if (timer >= 1) {
 			timer = 0;
-			symbol1++;
-			symbol2++;
-			symbol3++;
-			symbol4++;
-			symbol5++;
-			symbol6++;
-			symbol7++;
-			symbol8++;
-			symbol9++;
-		}
 
-		// This block of code makes the rotors loop through the same symbols
-		if (symbol1 > 6) { // Check that number didn't exceed its limit
-			symbol1 = rand()%4 + 3; // Limit the result to a number from 3 to 6
-		}
+			// First rotor
+			symbol3 = symbol2;
+			symbol2 = symbol1;
+			symbol1 = rand() % 4 + 3;
 
-		if (symbol2 > 6) { // Check that number didn't exceed its limit
-			symbol2 = rand()%4 + 3;
-		}
+			// Second rotor
+			symbol4 = symbol5;
+			symbol5 = symbol6;
+			symbol6 = rand() % 4 + 3;
 
-		if (symbol3 > 6) { // Check that number didn't exceed its limit
-			symbol3 = rand()%4 + 3;
-		}
-
-		if (symbol4 > 6) { // Check that number didn't exceed its limit
-			symbol4 = rand()%4 + 3;
-		}
-
-		if (symbol5 > 6) { // Check that number didn't exceed its limit
-			symbol5 = rand()%4 + 3;
-		}
-
-		if (symbol6 > 6) { // Check that number didn't exceed its limit
-			symbol6 = rand()%4 + 3;
-		}
-
-		if (symbol7 > 6) { // Check that number didn't exceed its limit
-			symbol7 = rand()%4 + 3;
-		}
-
-		if (symbol8 > 6) { // Check that number didn't exceed its limit
-			symbol8 = rand()%4 + 3;
-		}
-
-		if (symbol9 > 6) { // Check that number didn't exceed its limit
-			symbol9 = rand()%4 + 3;
+			// Third rotor
+			symbol9 = symbol8;
+			symbol8 = symbol7;
+			symbol7 = rand() % 4 + 3;
 		}
 
 
@@ -262,7 +231,6 @@ int main()
 	} // end while
 
 	  // SECTION: shutdown and bail
-//	Clear_Screen();
 
 	Draw_String(10, 20, "");
 	Set_Color(15, 0); // Set required colour palette
